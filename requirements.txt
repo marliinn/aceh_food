@@ -1,0 +1,5 @@
+streamlit
+fpdf
+Pillow
+extra-streamlit-components
+streamlit-drawable-canvas
