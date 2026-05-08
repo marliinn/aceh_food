@@ -23,7 +23,7 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     # --- KOP SURAT ---
     if os.path.exists('logo.jpeg'):
         pdf.image('logo.jpeg', x=10, y=10, w=20) 
-        text_x = 55 
+        text_x = 30 
     else:
         text_x = 10
     pdf.set_xy(text_x, 12)
