@@ -15,8 +15,8 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     pdf.add_page()
     
     # --- KOP SURAT ---
-    if os.path.exists('logo.png'):
-        pdf.image('logo.png', x=10, y=10, w=40) 
+    if os.path.exists('logo.jpeg'):
+        pdf.image('logo.jpeg', x=10, y=10, w=40) 
         text_x = 55 
     else:
         text_x = 10
