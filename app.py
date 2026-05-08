@@ -54,17 +54,22 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     def add_row(label1, val1, label2="", val2=""):
         pdf.set_font("Arial", '', 9)
         start_y = pdf.get_y()
+        
+        # Kolom Kiri
         pdf.set_xy(10, start_y)
         pdf.cell(35, 6, txt=label1, border=0)
         pdf.cell(5, 6, txt=":", border=0)
         pdf.multi_cell(55, 6, txt=str(val1), border='B')
         y_left = pdf.get_y()
+        
+        # Kolom Kanan
         if label2:
             pdf.set_xy(110, start_y)
             pdf.cell(35, 6, txt=label2, border=0)
             pdf.cell(5, 6, txt=":", border=0)
             pdf.multi_cell(50, 6, txt=str(val2), border='B')
-            pdf.set_y(max(y_left, pdf.get_y()))
+            y_right = pdf.get_y()
+            pdf.set_y(max(y_left, y_right))
         else:
             pdf.set_y(y_left)
         pdf.ln(1)
@@ -100,15 +105,19 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     pdf.cell(190, 6, txt="BANGUNAN OUTLET", ln=True)
     draw_radio_row("STATUS KEPEMILIKAN :", ["PRIBADI", "KELUARGA", "SEWA"], data['status_kepemilikan'])
     draw_radio_row("JENIS BANGUNAN :", ["MODERN STORE", "RUKO", "RUMAH TINGGAL", "STAND PASAR"], data['jenis_bangunan'])
+    
     pdf.set_x(10)
     pdf.cell(40, 6, txt="LINK LOKASI G-MAP :")
     pdf.multi_cell(150, 6, txt=data['link_gmap'], border='B')
+    
     pdf.ln(2)
     draw_radio_row("TIPE PENJUALAN :", ["CBD", "COD", "TOP"], data['tipe_penjualan'], top_hari=data['top_hari'])
     draw_radio_row("JENIS PEMBAYARAN :", ["TRANSFER", "BG", "TUNAI"], data['jenis_pembayaran'])
+    
     pdf.set_x(10)
     pdf.cell(40, 6, txt="NAMA REKENING BANK :")
     pdf.multi_cell(150, 6, txt=data['nama_rekening'], border='B')
+    
     pdf.set_x(10)
     pdf.cell(35, 6, txt="LIMIT PIUTANG")
     pdf.cell(5, 6, txt=": Rp")
@@ -122,10 +131,45 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     draw_checkbox(50, y, "NONPKP", data['status_pajak'] == "NONPKP")
     draw_checkbox(75, y, "PKP", data['status_pajak'] == "PKP")
     pdf.ln(8)
+    
     pdf.cell(40, 6, txt="NOMOR NPWP :")
     pdf.multi_cell(150, 6, txt=data['npwp'], border='B')
     pdf.cell(40, 6, txt="ALAMAT NPWP :")
     pdf.multi_cell(150, 6, txt=data['alamat_npwp'], border='B')
+
+    pdf.cell(50, 6, txt="TIPE PENERBITAN FAKTUR PAJAK :", ln=True)
+    y = pdf.get_y()
+    draw_checkbox(20, y, "Faktur Pajak Sesuai Surat Jalan/Nota Kiriman", data['tipe_faktur'] == "Faktur Pajak Sesuai Surat Jalan/Nota Kiriman")
+    draw_checkbox(115, y, "Tidak Minta Faktur Pajak", data['tipe_faktur'] == "Tidak Minta Faktur Pajak")
+    pdf.ln(6)
+    y = pdf.get_y()
+    draw_checkbox(20, y, "Faktur Pajak Sesuai Sale Out", data['tipe_faktur'] == "Faktur Pajak Sesuai Sale Out")
+    draw_checkbox(115, y, "Yang lain...", data['tipe_faktur'] == "Yang lain...")
+    pdf.ln(6)
+    y = pdf.get_y()
+    draw_checkbox(20, y, "Faktur Pajak Sesuai Totalan (Konsinyasi dikurangi retur)", data['tipe_faktur'] == "Faktur Pajak Sesuai Totalan (Konsinyasi dikurangi retur)")
+    pdf.ln(8)
+
+    pdf.cell(50, 6, txt="FAKTUR PAJAK :", ln=True)
+    y = pdf.get_y()
+    draw_checkbox(20, y, "Dikirim melalui email", data['metode_faktur'] == "Dikirim melalui email")
+    draw_checkbox(115, y, "Tidak Minta Faktur Pajak", data['metode_faktur'] == "Tidak Minta Faktur Pajak")
+    pdf.ln(6)
+    y = pdf.get_y()
+    draw_checkbox(20, y, "Diprint dan diikutkan dalam tagihan", data['metode_faktur'] == "Diprint dan diikutkan dalam tagihan")
+    draw_checkbox(115, y, "Yang lain...", data['metode_faktur'] == "Yang lain...")
+    pdf.ln(8)
+
+    y = pdf.get_y()
+    pdf.cell(40, 6, txt="KETERANGAN PO :")
+    draw_checkbox(50, y, "MINTA PO", data['ket_po'] == "MINTA PO")
+    draw_checkbox(80, y, "LANGSUNG ISI", data['ket_po'] == "LANGSUNG ISI")
+    pdf.ln(8)
+
+    pdf.cell(40, 6, txt="DISKON TOKO :")
+    pdf.cell(100, 6, txt=str(data['diskon']), border='B', ln=True)
+    pdf.cell(40, 6, txt="NAMA SALES :")
+    pdf.cell(100, 6, txt=str(data['nama_sales']), border='B', ln=True)
 
     # --- HALAMAN 2: LAMPIRAN & TTD ---
     pdf.add_page()
@@ -147,6 +191,7 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
 
     draw_img("KTP", data['ktp_img'], 10, 10, 92)
     draw_img("NPWP", data['npwp_img'], 105, 10, 95)
+    
     pdf.set_fill_color(170, 170, 170)
     pdf.rect(10, 65, 190, 6, 'DF')
     pdf.set_xy(10, 65)
@@ -154,6 +199,7 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     pdf.set_font("Arial", 'B', 10)
     pdf.cell(190, 6, txt="FOTO LOKASI", align='C')
     pdf.set_text_color(0, 0, 0)
+    
     draw_img("TAMPAK DEPAN", data['depan_img'], 10, 71, 92)
     draw_img("TAMPAK DALAM", data['dalam_img'], 105, 71, 95)
     draw_img("TAMPAK KIRI", data['kiri_img'], 10, 125, 92)
@@ -166,6 +212,7 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     pdf.cell(45, 5, txt="PELANGGAN")
     pdf.cell(45, 5, txt="SALES")
     pdf.cell(50, 5, txt="SUPERVISOR")
+    
     pdf.set_fill_color(150, 150, 150)
     pdf.set_text_color(255, 255, 255)
     pdf.cell(50, 6, txt="VALIDATOR", align='C', fill=True, ln=True)
@@ -190,10 +237,11 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     pdf.line(10, y_line, 45, y_line)
     pdf.line(55, y_line, 90, y_line)
     pdf.line(100, y_line, 140, y_line)
+    
     pdf.set_xy(10, y_line + 1)
-    pdf.cell(45, 5, txt=f"Nama : {data['nama_pemilik']}")
+    pdf.cell(45, 5, txt=f"Nama : {data['nama_pemilik']}") 
     pdf.set_xy(55, y_line + 1)
-    pdf.cell(45, 5, txt=f"Nama : {data['nama_sales']}") 
+    pdf.cell(45, 5, txt=f"Nama : {data['nama_sales']}")   
     pdf.set_xy(100, y_line + 1)
     pdf.cell(40, 5, txt="Nama :")
     
@@ -206,11 +254,21 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     
     return pdf.output(dest='S').encode('latin1')
 
+
 # --- TAMPILAN WEB (STREAMLIT) ---
 st.set_page_config(page_title="Aplikasi Form NOO", layout="wide")
+
+# Konfigurasi Auto-Save Cookie
 cookie_manager = stx.CookieManager()
 draft_str = cookie_manager.get(cookie="noo_draft")
-draft_data = json.loads(draft_str) if draft_str and isinstance(draft_str, str) else draft_str if isinstance(draft_str, dict) else {}
+draft_data = {}
+if draft_str and isinstance(draft_str, str):
+    try:
+        draft_data = json.loads(draft_str)
+    except:
+        pass
+elif isinstance(draft_str, dict):
+    draft_data = draft_str
 
 def get_val(key): 
     return draft_data.get(key, "")
@@ -355,6 +413,7 @@ with col_sig1:
         stroke_color="#000000",
         background_color="#eeeeee",
         height=150,
+        drawing_mode="freedraw",
         key="canvas_pelanggan",
     )
 
@@ -366,6 +425,7 @@ with col_sig2:
         stroke_color="#000000",
         background_color="#eeeeee",
         height=150,
+        drawing_mode="freedraw",
         key="canvas_sales",
     )
 
