@@ -10,6 +10,25 @@ import numpy as np
 from streamlit_drawable_canvas import st_canvas
 
 
+# --- MENGHILANGKAN HEADER & FOOTER BAWAAN STREAMLIT ---
+hide_st_style = """
+            <style>
+            /* Sembunyikan header atas (Fork, menu titik tiga, dll) */
+            header {visibility: hidden;}
+            
+            /* Sembunyikan garis dekorasi warna-warni di paling atas (opsional) */
+            [data-testid="stDecoration"] {display: none;}
+
+            /* Sembunyikan footer bawaan */
+            footer {visibility: hidden;}
+
+            /* Sembunyikan tombol floating Streamlit Cloud di pojok kanan bawah */
+            .viewerBadge_container {display: none !important;}
+            #MainMenu {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_st_style, unsafe_allow_html=True)
+
 # ── HELPER: DRAFT via st.query_params ────────────────────────────────
 
 def save_draft(data: dict):
@@ -71,7 +90,7 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     # --- KOP SURAT ---
     if os.path.exists('logo.jpeg'):
         pdf.image('logo.jpeg', x=10, y=10, w=20) 
-        text_x = 55 
+        text_x = 30
     else:
         text_x = 10
     pdf.set_xy(text_x, 12)
