@@ -196,6 +196,8 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     draw_checkbox(75, y, "PKP", data['status_pajak'] == "PKP")
     pdf.ln(8)
     
+    pdf.cell(45, 6, txt="NAMA PEMILIK NPWP :")
+    pdf.multi_cell(145, 6, txt=data.get('nama_pemilik_npwp', ''), border='B')
     pdf.cell(40, 6, txt="NOMOR NPWP :")
     pdf.multi_cell(150, 6, txt=data['npwp'], border='B')
     pdf.cell(40, 6, txt="ALAMAT NPWP :")
@@ -412,7 +414,7 @@ if st.session_state.halaman == 1:
             top_hari = st.number_input("Jumlah Hari TOP", min_value=1, step=1, value=max(_top, 1))
         bayar_opts       = ["TRANSFER", "BG", "TUNAI"]
         jenis_pembayaran = st.radio("Jenis Pembayaran *", bayar_opts, index=get_idx(bayar_opts, "jenis_pembayaran"), horizontal=True)
-        nama_rekening    = st.text_input("Nama Rekening Bank *", value=get_val("nama_rekening"))
+        nama_rekening    = st.text_input("Nama Rekening Bank", value=get_val("nama_rekening"))
         cl1, cl2         = st.columns(2)
         with cl1: limit_piutang = st.text_input("Limit Piutang (Rp) *",    value=get_val("limit_piutang"))
         with cl2: limit_nota    = st.text_input("Limit Lembar Nota (Rp) *", value=get_val("limit_nota"))
@@ -421,6 +423,7 @@ if st.session_state.halaman == 1:
         st.subheader("3. Informasi Pajak, Faktur & Sales")
         pajak_opts    = ["NONPKP", "PKP"]
         status_pajak  = st.radio("Status Perpajakan *", pajak_opts, index=get_idx(pajak_opts, "status_pajak"), horizontal=True)
+        nama_pemilik_npwp = st.text_input("Nama Pemilik NPWP", value=get_val("nama_pemilik_npwp"))
         npwp          = st.text_input("Nomor NPWP (Jika Ada)", value=get_val("npwp"))
         alamat_npwp   = st.text_area("Alamat NPWP",            value=get_val("alamat_npwp"))
         faktur_opts   = [
@@ -475,7 +478,7 @@ if st.session_state.halaman == 1:
                 "Telepon Outlet": telepon, "Email": email, "Jadwal Kunjungan": jadwal_kunjungan,
                 "Jadwal Penagihan": jadwal_penagihan, "Nama Pemilik": nama_pemilik, "Telepon Pemilik": telp_pemilik,
                 "Alamat Pemilik": alamat_pemilik, "NIK Pemilik": nik, "Nama PIC": nama_pic, "Telepon PIC": telp_pic,
-                "Jabatan PIC": jabatan, "Link Lokasi G-MAP": link_gmap, "Nama Rekening Bank": nama_rekening,
+                "Jabatan PIC": jabatan, "Link Lokasi G-MAP": link_gmap,
                 "Limit Piutang": limit_piutang, "Limit Lembar Nota": limit_nota, "Nama Sales": nama_sales
             }
             
@@ -499,7 +502,7 @@ elif st.session_state.halaman == 2:
     st.subheader("4. Lampiran Foto & Dokumen")
     ci1, ci2 = st.columns(2)
     with ci1:
-        ktp_img   = st.file_uploader("Upload Foto KTP *",          type=["jpg","jpeg","png"])
+        ktp_img   = st.file_uploader("Upload Foto KTP",          type=["jpg","jpeg","png"])
         depan_img = st.file_uploader("Foto Toko: Tampak Depan *",  type=["jpg","jpeg","png"])
         kiri_img  = st.file_uploader("Foto Toko: Samping Kiri *",  type=["jpg","jpeg","png"])
     with ci2:
@@ -511,12 +514,12 @@ elif st.session_state.halaman == 2:
     st.subheader("5. Tanda Tangan Digital")
     cs1, cs2 = st.columns(2)
     with cs1:
-        st.write(f"**Tanda Tangan Pelanggan ({data_h1.get('nama_pemilik','...')})**")
+        st.write(f"**Tanda Tangan Pelanggan *({data_h1.get('nama_pemilik','...')})**")
         canvas_p = st_canvas(fill_color="rgba(255,255,255,0)", stroke_width=3,
                              stroke_color="#000000", background_color="#ffffff",
                              height=150, width=350, drawing_mode="freedraw", key="cp")
     with cs2:
-        st.write(f"**Tanda Tangan Sales ({data_h1.get('nama_sales','...')})**")
+        st.write(f"**Tanda Tangan Sales *({data_h1.get('nama_sales','...')})**")
         canvas_s = st_canvas(fill_color="rgba(255,255,255,0)", stroke_width=3,
                              stroke_color="#000000", background_color="#ffffff",
                              height=150, width=350, drawing_mode="freedraw", key="cs")
@@ -539,7 +542,6 @@ elif st.session_state.halaman == 2:
 
         # --- VALIDASI GAMBAR WAJIB ---
         mandatory_images = {
-            "Foto KTP": ktp_img,
             "Foto Toko: Tampak Depan": depan_img,
             "Foto Toko: Tampak Dalam": dalam_img,
             "Foto Toko: Samping Kiri": kiri_img,
@@ -547,9 +549,20 @@ elif st.session_state.halaman == 2:
         }
         
         empty_images = [name for name, img in mandatory_images.items() if img is None]
+        ttd_pelanggan_kosong = canvas_p.json_data is None or len(canvas_p.json_data.get("objects", [])) == 0
+        ttd_sales_kosong = canvas_s.json_data is None or len(canvas_s.json_data.get("objects", [])) == 0
 
-        if empty_images:
-            st.error(f"Mohon unggah gambar yang wajib diisi (*): {', '.join(empty_images)}")
+        if empty_images or ttd_pelanggan_kosong or ttd_sales_kosong:
+            error_msg = []
+            if empty_images:
+                error_msg.append(f"Foto: {', '.join(empty_images)}")
+            if ttd_pelanggan_kosong:
+                error_msg.append("Tanda Tangan Pelanggan")
+            if ttd_sales_kosong:
+                error_msg.append("Tanda Tangan Sales")
+                
+            st.error(f"Mohon lengkapi lampiran wajib (*): {', '.join(error_msg)}")
+            
         else:
             pdf_bytes = generate_pdf(data_final, img_p, img_s)
 
