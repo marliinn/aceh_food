@@ -9,20 +9,12 @@ import base64
 import numpy as np
 from streamlit_drawable_canvas import st_canvas
 
-
 # --- MENGHILANGKAN HEADER & FOOTER BAWAAN STREAMLIT ---
 hide_st_style = """
             <style>
-            /* Sembunyikan header atas (Fork, menu titik tiga, dll) */
             header {visibility: hidden;}
-            
-            /* Sembunyikan garis dekorasi warna-warni di paling atas (opsional) */
             [data-testid="stDecoration"] {display: none;}
-
-            /* Sembunyikan footer bawaan */
             footer {visibility: hidden;}
-
-            /* Sembunyikan tombol floating Streamlit Cloud di pojok kanan bawah */
             .viewerBadge_container {display: none !important;}
             #MainMenu {visibility: hidden;}
             </style>
@@ -30,9 +22,7 @@ hide_st_style = """
 st.markdown(hide_st_style, unsafe_allow_html=True)
 
 # ── HELPER: DRAFT via st.query_params ────────────────────────────────
-
 def save_draft(data: dict):
-    """Encode dict → base64 → simpan ke URL query param ?d=..."""
     try:
         b64 = base64.urlsafe_b64encode(
             json.dumps(data, ensure_ascii=False).encode("utf-8")
@@ -42,7 +32,6 @@ def save_draft(data: dict):
         pass
 
 def load_draft() -> dict:
-    """Baca query param ?d=... → decode → dict"""
     try:
         b64 = st.query_params.get("d", "")
         if b64:
@@ -54,15 +43,12 @@ def load_draft() -> dict:
     return {}
 
 def clear_draft():
-    """Hapus query param draft dari URL"""
     try:
         del st.query_params["d"]
     except Exception:
         pass
 
-
 # ── INISIALISASI SESSION STATE ────────────────────────────────────────
-
 if "halaman" not in st.session_state:
     st.session_state.halaman = 1
 if "form_data" not in st.session_state:
@@ -70,18 +56,14 @@ if "form_data" not in st.session_state:
 if "scroll_to_top" not in st.session_state:
     st.session_state.scroll_to_top = False
 
-
 # ── FUNGSI RESET ──────────────────────────────────────────────────────
-
 def reset_all_data():
     st.session_state.form_data  = {}
     st.session_state.halaman    = 1
     st.session_state.scroll_to_top = True
-    clear_draft()               # ✅ Hapus dari URL sekaligus
-
+    clear_draft()
 
 # ── FUNGSI GENERATE PDF ───────────────────────────────────────────────
-# (tidak ada perubahan — salin dari kode asli Anda)
 def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.set_auto_page_break(auto=True, margin=10)
@@ -98,10 +80,16 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     pdf.cell(0, 8, txt="CV. PUMA UTAMA MAKMUR ARTARIA", ln=True)
     pdf.set_xy(text_x, 20)
     pdf.set_font("Arial", '', 9)
-    pdf.multi_cell(0, 5, txt="Jalan Babatan Pantai XII No.31, Dukuh Sutorejo, Mulyorejo, Surabaya, 60113, Telp:031 3891571, HP: 0881-9776-552")
-    pdf.ln(5)
+    # Penambahan Nomor WA
+    pdf.multi_cell(0, 5, txt="Jalan Babatan Pantai XII No.31, Dukuh Sutorejo, Mulyorejo, Surabaya, 60113, Telp:031 3891571, HP: 0881-9776-552, WA: +62 822-383-366")
+    pdf.ln(3)
     pdf.line(10, pdf.get_y(), 200, pdf.get_y())
     pdf.ln(5)
+
+    # --- JUDUL DOKUMEN ---
+    pdf.set_font("Arial", 'B', 12)
+    pdf.cell(0, 6, txt="FORM PENGAJUAN / PERUBAHAN PELANGGAN", ln=True, align='C')
+    pdf.ln(4)
 
     def draw_checkbox(x, y, label, is_checked):
         pdf.rect(x, y + 1.5, 3, 3) 
@@ -143,6 +131,15 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
         pdf.ln(1)
 
     # --- ISI DATA (Halaman 1) ---
+    # Jenis Dokumen
+    y = pdf.get_y()
+    pdf.set_font("Arial", '', 9)
+    pdf.cell(35, 6, txt="JENIS DOKUMEN", border=0)
+    pdf.cell(5, 6, txt=":", border=0)
+    draw_checkbox(50, y, "Dokumen Pelanggan Baru", data['jenis_dokumen'] == "Dokumen Pelanggan Baru")
+    draw_checkbox(100, y, "Perubahan Data Pelanggan", data['jenis_dokumen'] == "Perubahan Data Pelanggan")
+    pdf.ln(8)
+
     y = pdf.get_y()
     pdf.cell(35, 6, txt="JENIS USAHA", border=0)
     pdf.cell(5, 6, txt=":", border=0)
@@ -166,7 +163,6 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     add_row("EMAIL", data['email'], "JUMLAH STORE", data['jumlah_store'])
     add_row("JADWAL KUNJUNGAN", data['jadwal_kunjungan'], "CHANNEL DIST", data['channel_dist'])
     add_row("JADWAL PENAGIHAN", data['jadwal_penagihan'])
-    add_row("JADWAL PENGIRIMAN", data['jadwal_pengiriman'])
     
     pdf.ln(3)
     pdf.set_font("Arial", 'B', 9)
@@ -329,25 +325,18 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
 # =====================================================================
 if st.session_state.halaman == 1:
 
-    # ── SCROLL TO TOP ─────────────────────────────────────────────────
     if st.session_state.scroll_to_top:
         components.html(
             """
             <script>
                 const doc = window.parent.document;
-                
-                // Menargetkan container scroll utama Streamlit
                 const containers = doc.querySelectorAll(
                     '[data-testid="stAppViewContainer"], [data-testid="stMainBlockContainer"], .main'
                 );
-                
                 containers.forEach(el => {
-                    // Paksa scroll dan scrollTop ke 0
                     el.scrollTo({ top: 0, behavior: 'instant' });
                     el.scrollTop = 0; 
                 });
-                
-                // Fallback untuk window utama
                 window.parent.scrollTo({ top: 0, behavior: 'instant' });
             </script>
             """,
@@ -355,9 +344,8 @@ if st.session_state.halaman == 1:
         )
         st.session_state.scroll_to_top = False
 
-    # ── BACA DRAFT ────────────────────────────────────────────────────
-    draft_data = load_draft()                       # dari URL query param
-    if st.session_state.form_data:                  # dari navigasi halaman 2→1
+    draft_data = load_draft()
+    if st.session_state.form_data:
         draft_data.update(st.session_state.form_data)
 
     def get_val(key):        return draft_data.get(key, "")
@@ -365,73 +353,74 @@ if st.session_state.halaman == 1:
         val = draft_data.get(key, "")
         return opts.index(val) if val in opts else 0
 
-    # ── BANNER INFO ───────────────────────────────────────────────────
-    #if draft_data:
-        #st.info("📋 Draft sebelumnya ditemukan dan telah dimuat otomatis.")
+    st.title("Aplikasi Input Form Pengajuan / Perubahan Pelanggan")
 
-    st.title("Aplikasi Input Form Pengajuan NOO")
+    jenis_dok_opts = ["Dokumen Pelanggan Baru", "Perubahan Data Pelanggan"]
+    jenis_dokumen = st.radio("Jenis Dokumen *", jenis_dok_opts, index=get_idx(jenis_dok_opts, "jenis_dokumen"), horizontal=True)
 
-    # ── BAGIAN 1: DATA OUTLET & PIC ───────────────────────────────────
+    st.markdown("---")
+
     st.subheader("1. Data Outlet, Pemilik, & PIC")
     col1, col2 = st.columns(2)
     with col1:
         jenis_usaha_opts = ["PERORANGAN", "BADAN USAHA"]
-        jenis_usaha       = st.radio("Jenis Usaha", jenis_usaha_opts, index=get_idx(jenis_usaha_opts, "jenis_usaha"), horizontal=True)
-        nama_outlet       = st.text_input("Nama Outlet",       value=get_val("nama_outlet"))
-        alamat_kirim      = st.text_input("Alamat Kirim",      value=get_val("alamat_kirim"))
-        alamat_tagih      = st.text_input("Alamat Tagih",      value=get_val("alamat_tagih"))
-        kelurahan         = st.text_input("Kelurahan",         value=get_val("kelurahan"))
-        kecamatan         = st.text_input("Kecamatan",         value=get_val("kecamatan"))
-        kota              = st.text_input("Kab / Kota",        value=get_val("kota"))
-        kode_pos          = st.text_input("Kode Pos",          value=get_val("kode_pos"))
-        telepon           = st.text_input("Telepon Outlet",    value=get_val("telepon"))
-        email             = st.text_input("Email",             value=get_val("email"))
-        jadwal_kunjungan  = st.text_input("Jadwal Kunjungan",  value=get_val("jadwal_kunjungan"))
-        jadwal_penagihan  = st.text_input("Jadwal Penagihan",  value=get_val("jadwal_penagihan"))
-        jadwal_pengiriman = st.text_input("Jadwal Pengiriman", value=get_val("jadwal_pengiriman"))
+        jenis_usaha       = st.radio("Jenis Usaha *", jenis_usaha_opts, index=get_idx(jenis_usaha_opts, "jenis_usaha"), horizontal=True)
+        nama_outlet       = st.text_input("Nama Outlet *",       value=get_val("nama_outlet"))
+        alamat_kirim      = st.text_input("Alamat Kirim *",      value=get_val("alamat_kirim"))
+        alamat_tagih      = st.text_input("Alamat Tagih *",      value=get_val("alamat_tagih"))
+        kelurahan         = st.text_input("Kelurahan *",         value=get_val("kelurahan"))
+        kecamatan         = st.text_input("Kecamatan *",         value=get_val("kecamatan"))
+        kota              = st.text_input("Kab / Kota *",        value=get_val("kota"))
+        kode_pos          = st.text_input("Kode Pos *",          value=get_val("kode_pos"))
+        telepon           = st.text_input("Telepon Outlet *",    value=get_val("telepon"))
+        email             = st.text_input("Email *",             value=get_val("email"))
+        jadwal_kunjungan  = st.text_input("Jadwal Kunjungan *",  value=get_val("jadwal_kunjungan"))
+        jadwal_penagihan  = st.text_input("Jadwal Penagihan *",  value=get_val("jadwal_penagihan"))
 
     with col2:
         kode_pelanggan = st.text_input("Kode Pelanggan",   value=get_val("kode_pelanggan"))
-        tgl_pengajuan  = st.date_input("Tanggal Pengajuan")
-        nama_pemilik   = st.text_input("Nama Pemilik",     value=get_val("nama_pemilik"))
-        telp_pemilik   = st.text_input("Telepon Pemilik",  value=get_val("telp_pemilik"))
-        alamat_pemilik = st.text_area("Alamat Pemilik",    value=get_val("alamat_pemilik"))
-        nik            = st.text_input("NIK Pemilik",      value=get_val("nik"))
-        nama_pic       = st.text_input("Nama PIC",         value=get_val("nama_pic"))
-        telp_pic       = st.text_input("Telepon PIC",      value=get_val("telp_pic"))
-        jabatan        = st.text_input("Jabatan PIC",      value=get_val("jabatan"))
+        tgl_pengajuan  = st.date_input("Tanggal Pengajuan *")
+        nama_pemilik   = st.text_input("Nama Pemilik *",     value=get_val("nama_pemilik"))
+        telp_pemilik   = st.text_input("Telepon Pemilik *",  value=get_val("telp_pemilik"))
+        alamat_pemilik = st.text_area("Alamat Pemilik *",    value=get_val("alamat_pemilik"))
+        nik            = st.text_input("NIK Pemilik *",      value=get_val("nik"))
+        nama_pic       = st.text_input("Nama PIC *",         value=get_val("nama_pic"))
+        telp_pic       = st.text_input("Telepon PIC *",      value=get_val("telp_pic"))
+        jabatan        = st.text_input("Jabatan PIC *",      value=get_val("jabatan"))
         _store         = draft_data.get("jumlah_store")
         _store         = int(_store) if _store else 1
-        jumlah_store   = st.number_input("Jumlah Store", min_value=1, step=1, value=max(_store, 1))
-        channel_dist   = st.text_input("Channel Distribusi", value=get_val("channel_dist"))
+        jumlah_store   = st.number_input("Jumlah Store *", min_value=1, step=1, value=max(_store, 1))
+        
+        channel_opts   = ["Mini Market", "Super Market", "Hyper Market", "HORECA", "Toko Oleh-Oleh Modern", "Toko Oleh-Oleh Tradisional"]
+        channel_dist   = st.selectbox("Channel Distribusi *", channel_opts, index=get_idx(channel_opts, "channel_dist"))
 
     st.markdown("---")
     col3, col4 = st.columns(2)
     with col3:
         st.subheader("2. Bangunan Outlet & Pembayaran")
         kepemilikan_opts = ["PRIBADI", "KELUARGA", "SEWA"]
-        status_kepemilikan = st.radio("Status Kepemilikan", kepemilikan_opts, index=get_idx(kepemilikan_opts, "status_kepemilikan"), horizontal=True)
+        status_kepemilikan = st.radio("Status Kepemilikan *", kepemilikan_opts, index=get_idx(kepemilikan_opts, "status_kepemilikan"), horizontal=True)
         bangunan_opts      = ["MODERN STORE", "RUKO", "RUMAH TINGGAL", "STAND PASAR"]
-        jenis_bangunan     = st.radio("Jenis Bangunan", bangunan_opts, index=get_idx(bangunan_opts, "jenis_bangunan"), horizontal=True)
-        link_gmap          = st.text_input("Link Lokasi G-MAP", value=get_val("link_gmap"))
+        jenis_bangunan     = st.radio("Jenis Bangunan *", bangunan_opts, index=get_idx(bangunan_opts, "jenis_bangunan"), horizontal=True)
+        link_gmap          = st.text_input("Link Lokasi G-MAP *", value=get_val("link_gmap"))
         jual_opts          = ["CBD", "COD", "TOP"]
-        tipe_penjualan     = st.radio("Tipe Penjualan", jual_opts, index=get_idx(jual_opts, "tipe_penjualan"), horizontal=True)
+        tipe_penjualan     = st.radio("Tipe Penjualan *", jual_opts, index=get_idx(jual_opts, "tipe_penjualan"), horizontal=True)
         top_hari = ""
         if tipe_penjualan == "TOP":
             _top     = draft_data.get("top_hari")
             _top     = int(_top) if _top else 1
             top_hari = st.number_input("Jumlah Hari TOP", min_value=1, step=1, value=max(_top, 1))
         bayar_opts       = ["TRANSFER", "BG", "TUNAI"]
-        jenis_pembayaran = st.radio("Jenis Pembayaran", bayar_opts, index=get_idx(bayar_opts, "jenis_pembayaran"), horizontal=True)
-        nama_rekening    = st.text_input("Nama Rekening Bank", value=get_val("nama_rekening"))
+        jenis_pembayaran = st.radio("Jenis Pembayaran *", bayar_opts, index=get_idx(bayar_opts, "jenis_pembayaran"), horizontal=True)
+        nama_rekening    = st.text_input("Nama Rekening Bank *", value=get_val("nama_rekening"))
         cl1, cl2         = st.columns(2)
-        with cl1: limit_piutang = st.text_input("Limit Piutang (Rp)",    value=get_val("limit_piutang"))
-        with cl2: limit_nota    = st.text_input("Limit Lembar Nota (Rp)", value=get_val("limit_nota"))
+        with cl1: limit_piutang = st.text_input("Limit Piutang (Rp) *",    value=get_val("limit_piutang"))
+        with cl2: limit_nota    = st.text_input("Limit Lembar Nota (Rp) *", value=get_val("limit_nota"))
 
     with col4:
         st.subheader("3. Informasi Pajak, Faktur & Sales")
         pajak_opts    = ["NONPKP", "PKP"]
-        status_pajak  = st.radio("Status Perpajakan", pajak_opts, index=get_idx(pajak_opts, "status_pajak"), horizontal=True)
+        status_pajak  = st.radio("Status Perpajakan *", pajak_opts, index=get_idx(pajak_opts, "status_pajak"), horizontal=True)
         npwp          = st.text_input("Nomor NPWP (Jika Ada)", value=get_val("npwp"))
         alamat_npwp   = st.text_area("Alamat NPWP",            value=get_val("alamat_npwp"))
         faktur_opts   = [
@@ -448,20 +437,18 @@ if st.session_state.halaman == 1:
         ]
         metode_faktur = st.radio("Metode Pengiriman Faktur Pajak", metode_opts, index=get_idx(metode_opts, "metode_faktur"))
         po_opts       = ["MINTA PO", "LANGSUNG ISI"]
-        ket_po        = st.radio("Keterangan PO", po_opts, index=get_idx(po_opts, "ket_po"), horizontal=True)
+        ket_po        = st.radio("Keterangan PO *", po_opts, index=get_idx(po_opts, "ket_po"), horizontal=True)
         diskon        = st.text_input("Diskon Toko (%)", value=get_val("diskon"))
-        nama_sales    = st.text_input("Nama Sales",      value=get_val("nama_sales"))
+        nama_sales    = st.text_input("Nama Sales *",      value=get_val("nama_sales"))
 
-    # ── KUMPULKAN DATA ─────────────────────────────────────────────────
     current_data = {
-        "jenis_usaha": jenis_usaha, "nama_outlet": nama_outlet, "alamat_kirim": alamat_kirim,
-        "alamat_tagih": alamat_tagih, "kelurahan": kelurahan, "kecamatan": kecamatan,
-        "kota": kota, "kode_pos": kode_pos, "telepon": telepon, "email": email,
-        "jadwal_kunjungan": jadwal_kunjungan, "jadwal_penagihan": jadwal_penagihan,
-        "jadwal_pengiriman": jadwal_pengiriman, "kode_pelanggan": kode_pelanggan,
-        "tgl_pengajuan": tgl_pengajuan.strftime("%d %B %Y"), "nama_pemilik": nama_pemilik,
-        "telp_pemilik": telp_pemilik, "alamat_pemilik": alamat_pemilik, "nik": nik,
-        "nama_pic": nama_pic, "telp_pic": telp_pic, "jabatan": jabatan,
+        "jenis_dokumen": jenis_dokumen, "jenis_usaha": jenis_usaha, "nama_outlet": nama_outlet, 
+        "alamat_kirim": alamat_kirim, "alamat_tagih": alamat_tagih, "kelurahan": kelurahan, 
+        "kecamatan": kecamatan, "kota": kota, "kode_pos": kode_pos, "telepon": telepon, 
+        "email": email, "jadwal_kunjungan": jadwal_kunjungan, "jadwal_penagihan": jadwal_penagihan,
+        "kode_pelanggan": kode_pelanggan, "tgl_pengajuan": tgl_pengajuan.strftime("%d %B %Y"), 
+        "nama_pemilik": nama_pemilik, "telp_pemilik": telp_pemilik, "alamat_pemilik": alamat_pemilik, 
+        "nik": nik, "nama_pic": nama_pic, "telp_pic": telp_pic, "jabatan": jabatan,
         "jumlah_store": jumlah_store, "channel_dist": channel_dist,
         "status_kepemilikan": status_kepemilikan, "jenis_bangunan": jenis_bangunan,
         "link_gmap": link_gmap, "tipe_penjualan": tipe_penjualan, "top_hari": str(top_hari),
@@ -472,8 +459,7 @@ if st.session_state.halaman == 1:
         "ket_po": ket_po, "diskon": diskon, "nama_sales": nama_sales,
     }
 
-    # ── AUTO-SAVE KE URL (sinkron, tanpa library tambahan) ─────────────
-    save_draft(current_data)                        # ✅ Setiap rerun = auto-save
+    save_draft(current_data)
 
     st.markdown("---")
     cb1, cb2 = st.columns([1, 4])
@@ -481,16 +467,33 @@ if st.session_state.halaman == 1:
         st.button("🗑️ Hapus Draft & Reset", use_container_width=True, on_click=reset_all_data)
     with cb2:
         if st.button("Lanjut ke Upload Foto & TTD ➡️", type="primary", use_container_width=True):
-            st.session_state.form_data = current_data
-            st.session_state.halaman   = 2
-            st.rerun()
+            
+            # FITUR VALIDASI FIELD WAJIB BINTANG (*)
+            mandatory_fields = {
+                "Nama Outlet": nama_outlet, "Alamat Kirim": alamat_kirim, "Alamat Tagih": alamat_tagih,
+                "Kelurahan": kelurahan, "Kecamatan": kecamatan, "Kab / Kota": kota, "Kode Pos": kode_pos,
+                "Telepon Outlet": telepon, "Email": email, "Jadwal Kunjungan": jadwal_kunjungan,
+                "Jadwal Penagihan": jadwal_penagihan, "Nama Pemilik": nama_pemilik, "Telepon Pemilik": telp_pemilik,
+                "Alamat Pemilik": alamat_pemilik, "NIK Pemilik": nik, "Nama PIC": nama_pic, "Telepon PIC": telp_pic,
+                "Jabatan PIC": jabatan, "Link Lokasi G-MAP": link_gmap, "Nama Rekening Bank": nama_rekening,
+                "Limit Piutang": limit_piutang, "Limit Lembar Nota": limit_nota, "Nama Sales": nama_sales
+            }
+            
+            empty_fields = [label for label, val in mandatory_fields.items() if not str(val).strip()]
+            
+            if empty_fields:
+                st.error(f"Mohon lengkapi kolom yang wajib diisi (*): {', '.join(empty_fields)}")
+            else:
+                st.session_state.form_data = current_data
+                st.session_state.halaman   = 2
+                st.rerun()
 
 
 # =====================================================================
 # HALAMAN 2
 # =====================================================================
 elif st.session_state.halaman == 2:
-    st.title("Aplikasi Input Form Pengajuan NOO")
+    st.title("Aplikasi Input Form Pengajuan / Perubahan Pelanggan")
     data_h1 = st.session_state.form_data
 
     st.subheader("4. Lampiran Foto & Dokumen")
@@ -539,7 +542,7 @@ elif st.session_state.halaman == 2:
         st.download_button(
             label="📄 Generate & Download PDF",
             data=pdf_bytes,
-            file_name=f"Form_NOO_{data_final['nama_outlet']}.pdf",
+            file_name=f"Form_Pelanggan_{data_final['nama_outlet']}.pdf",
             mime="application/pdf",
             use_container_width=True,
             on_click=reset_all_data,
