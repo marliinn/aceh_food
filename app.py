@@ -71,8 +71,8 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     
     # --- KOP SURAT ---
     if os.path.exists('logo.jpeg'):
-        pdf.image('logo.jpeg', x=10, y=10, w=20) 
-        text_x = 30
+        pdf.image('logo.jpeg', x=10, y=10, w=25) 
+        text_x = 35
     else:
         text_x = 10
     pdf.set_xy(text_x, 12)
@@ -81,7 +81,7 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     pdf.set_xy(text_x, 20)
     pdf.set_font("Arial", '', 9)
     # Penambahan Nomor WA
-    pdf.multi_cell(0, 5, txt="Jalan Babatan Pantai XII No.31, Dukuh Sutorejo, Mulyorejo, Surabaya, 60113, Telp:031 3891571, HP: 0881-9776-552, WA: +62 822-383-366")
+    pdf.multi_cell(0, 5, txt="Jalan Babatan Pantai XII No.31, Dukuh Sutorejo, Mulyorejo, Surabaya, 60113, Whatsapp: +62 81-9776-552, Whatsapp: +62 822-383-366")
     pdf.ln(3)
     pdf.line(10, pdf.get_y(), 200, pdf.get_y())
     pdf.ln(5)
@@ -184,8 +184,8 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     
     pdf.set_x(10)
     pdf.cell(35, 6, txt="LIMIT PIUTANG")
-    pdf.cell(5, 6, txt=": Rp")
-    pdf.cell(50, 6, txt=data['limit_piutang'], border='B')
+    pdf.cell(10, 6, txt=": Rp")
+    pdf.cell(45, 6, txt=data['limit_piutang'], border='B')
     pdf.cell(40, 6, txt="LIMIT LEMBAR NOTA :", align='R')
     pdf.cell(60, 6, txt=str(data['limit_nota']), border='B', ln=True)
 
@@ -499,13 +499,13 @@ elif st.session_state.halaman == 2:
     st.subheader("4. Lampiran Foto & Dokumen")
     ci1, ci2 = st.columns(2)
     with ci1:
-        ktp_img   = st.file_uploader("Upload Foto KTP",          type=["jpg","jpeg","png"])
-        depan_img = st.file_uploader("Foto Toko: Tampak Depan",  type=["jpg","jpeg","png"])
-        kiri_img  = st.file_uploader("Foto Toko: Samping Kiri",  type=["jpg","jpeg","png"])
+        ktp_img   = st.file_uploader("Upload Foto KTP *",          type=["jpg","jpeg","png"])
+        depan_img = st.file_uploader("Foto Toko: Tampak Depan *",  type=["jpg","jpeg","png"])
+        kiri_img  = st.file_uploader("Foto Toko: Samping Kiri *",  type=["jpg","jpeg","png"])
     with ci2:
         npwp_img  = st.file_uploader("Upload Foto NPWP",         type=["jpg","jpeg","png"])
-        dalam_img = st.file_uploader("Foto Toko: Tampak Dalam",  type=["jpg","jpeg","png"])
-        kanan_img = st.file_uploader("Foto Toko: Samping Kanan", type=["jpg","jpeg","png"])
+        dalam_img = st.file_uploader("Foto Toko: Tampak Dalam *",  type=["jpg","jpeg","png"])
+        kanan_img = st.file_uploader("Foto Toko: Samping Kanan *", type=["jpg","jpeg","png"])
 
     st.markdown("---")
     st.subheader("5. Tanda Tangan Digital")
@@ -537,13 +537,27 @@ elif st.session_state.halaman == 2:
             "dalam_img": dalam_img, "kiri_img": kiri_img, "kanan_img": kanan_img,
         })
 
-        pdf_bytes = generate_pdf(data_final, img_p, img_s)
+        # --- VALIDASI GAMBAR WAJIB ---
+        mandatory_images = {
+            "Foto KTP": ktp_img,
+            "Foto Toko: Tampak Depan": depan_img,
+            "Foto Toko: Tampak Dalam": dalam_img,
+            "Foto Toko: Samping Kiri": kiri_img,
+            "Foto Toko: Samping Kanan": kanan_img
+        }
+        
+        empty_images = [name for name, img in mandatory_images.items() if img is None]
 
-        st.download_button(
-            label="📄 Generate & Download PDF",
-            data=pdf_bytes,
-            file_name=f"Form_Pelanggan_{data_final['nama_outlet']}.pdf",
-            mime="application/pdf",
-            use_container_width=True,
-            on_click=reset_all_data,
-        )
+        if empty_images:
+            st.error(f"Mohon unggah gambar yang wajib diisi (*): {', '.join(empty_images)}")
+        else:
+            pdf_bytes = generate_pdf(data_final, img_p, img_s)
+
+            st.download_button(
+                label="📄 Generate & Download PDF",
+                data=pdf_bytes,
+                file_name=f"Form_Pelanggan_{data_final['nama_outlet']}.pdf",
+                mime="application/pdf",
+                use_container_width=True,
+                on_click=reset_all_data,
+            )
