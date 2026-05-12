@@ -121,15 +121,15 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
         pdf.set_font("Arial", '', 9)
         start_y = pdf.get_y()
         pdf.set_xy(10, start_y)
-        pdf.cell(35, 6, txt=label1, border=0)
-        pdf.cell(5, 6, txt=":", border=0)
-        pdf.multi_cell(55, 6, txt=str(val1), border='B')
+        pdf.cell(35, 5, txt=label1, border=0)
+        pdf.cell(5, 5, txt=":", border=0)
+        pdf.multi_cell(55, 5, txt=str(val1), border='B')
         y_left = pdf.get_y()
         if label2:
             pdf.set_xy(110, start_y)
-            pdf.cell(35, 6, txt=label2, border=0)
-            pdf.cell(5, 6, txt=":", border=0)
-            pdf.multi_cell(50, 6, txt=str(val2), border='B')
+            pdf.cell(35, 5, txt=label2, border=0)
+            pdf.cell(5, 5, txt=":", border=0)
+            pdf.multi_cell(50, 5, txt=str(val2), border='B')
             y_right = pdf.get_y()
             pdf.set_y(max(y_left, y_right))
         else:
@@ -195,9 +195,9 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     pdf.set_x(10)
     pdf.cell(35, 6, txt="LIMIT PIUTANG")
     pdf.cell(10, 6, txt=": Rp")
-    pdf.cell(45, 6, txt=data['limit_piutang'], border='B')
+    pdf.cell(42, 6, txt=data['limit_piutang'], border='B')
     pdf.cell(40, 6, txt="LIMIT LEMBAR NOTA :", align='R')
-    pdf.cell(60, 6, txt=str(data['limit_nota']), border='B', ln=True)
+    pdf.cell(60, 5, txt=f"{data['limit_nota']} lembar", border='B', ln=True)
 
     pdf.ln(3)
     y = pdf.get_y()
@@ -242,10 +242,11 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     draw_checkbox(80, y, "LANGSUNG ISI", data['ket_po'] == "LANGSUNG ISI")
     pdf.ln(8)
 
-    pdf.cell(40, 6, txt="DISKON TOKO :")
-    pdf.cell(100, 6, txt=str(data['diskon']), border='B', ln=True)
-    pdf.cell(40, 6, txt="NAMA SALES :")
-    pdf.cell(100, 6, txt=str(data['nama_sales']), border='B', ln=True)
+    pdf.cell(30, 5, txt="DISKON TOKO :")
+    pdf.cell(40, 5, txt=str(data['diskon']), border='B')
+    pdf.cell(10, 5, txt="", border=0) # Spasi tengah
+    pdf.cell(30, 5, txt="NAMA SALES :")
+    pdf.cell(80, 5, txt=str(data['nama_sales']), border='B', ln=True)
 
     # --- HALAMAN 2: LAMPIRAN & TTD ---
     pdf.add_page()
@@ -428,7 +429,7 @@ if st.session_state.halaman == 1:
         bank_asal         = st.text_input("Bank Asal", value=get_val("bank_asal"))
         cl1, cl2         = st.columns(2)
         with cl1: limit_piutang = st.text_input("Limit Piutang (Rp) *",    value=get_val("limit_piutang"))
-        with cl2: limit_nota    = st.text_input("Limit Lembar Nota (Rp) *", value=get_val("limit_nota"))
+        with cl2: limit_nota    = st.text_input("Limit Lembar Nota (Lembar) *", value=get_val("limit_nota"))
 
     with col4:
         st.subheader("3. Informasi Pajak, Faktur & Sales")
