@@ -138,25 +138,38 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
 
     
     # --- ISI DATA (Halaman 1) ---
-    # Membuat alamat lengkap untuk Kirim dan Tagih
-    alamat_kirim_lengkap = f"Kel. {data.get('kelurahan_kirim', '')}, Kec. {data.get('kecamatan_kirim', '')}, {data.get('kota_kirim', '')}"
-    alamat_kirim_full = f"{data['alamat_kirim']}, {alamat_kirim_lengkap}"
+    y = pdf.get_y()
+    pdf.set_font("Arial", '', 9)
+    pdf.cell(35, 5, txt="JENIS DOKUMEN", border=0)
+    pdf.cell(5, 5, txt=":", border=0)
+    draw_checkbox(50, y, "Dokumen Pelanggan Baru", data.get('jenis_dokumen') == "Dokumen Pelanggan Baru")
+    draw_checkbox(100, y, "Perubahan Data Pelanggan", data.get('jenis_dokumen') == "Perubahan Data Pelanggan")
+    pdf.ln(6)
 
-    # Membuat alamat lengkap untuk Tagih
-    alamat_tagih_lengkap = f"Kel. {data.get('kelurahan', '')}, Kec. {data.get('kecamatan', '')}, {data.get('kota', '')}"
-    alamat_tagih_full = f"{data['alamat_tagih']}, {alamat_tagih_lengkap}"
+    y = pdf.get_y()
+    pdf.cell(35, 5, txt="JENIS USAHA", border=0)
+    pdf.cell(5, 5, txt=":", border=0)
+    draw_checkbox(50, y, "PERORANGAN", data.get('jenis_usaha') == "PERORANGAN")
+    draw_checkbox(80, y, "BADAN USAHA", data.get('jenis_usaha') == "BADAN USAHA")
+    pdf.ln(6)
 
-    # Row 1-3: Data Outlet & Jadwal
+    # 2. DATA UTAMA (ALAMAT DIPISAH & JADWAL DIPINDAH KE ATAS)
+    # Kita susun agar kolom kiri dan kanan tetap sejajar lurus
     add_row("NAMA OUTLET", data['nama_outlet'], "JADWAL KUNJUNGAN", data['jadwal_kunjungan'])
-    add_row("ALAMAT KIRIM", alamat_kirim_full, "JADWAL PENAGIHAN", data['jadwal_penagihan'])
-    add_row("ALAMAT TAGIH", alamat_tagih_full, "KODE PELANGGAN", data['kode_pelanggan'])
-
-    # Row 4-9: Identitas Pemilik & PIC
-    add_row("TELEPON", data['telepon'], "TGL PENGAJUAN", data['tgl_pengajuan'])
-    add_row("EMAIL", data['email'], "NAMA PEMILIK", data['nama_pemilik'])
-    add_row("ALAMAT PEMILIK", data['alamat_pemilik'], "TELEPON PEMILIK", data['telp_pemilik'])
-    add_row("NIK", data['nik'], "NAMA PIC", data['nama_pic'])
-    add_row("JABATAN", data['jabatan'], "TELEPON PIC", data['telp_pic'])
+    add_row("ALAMAT KIRIM", data['alamat_kirim'], "JADWAL PENAGIHAN", data['jadwal_penagihan'])
+    add_row("KELURAHAN KIRIM", data.get('kelurahan_kirim', ''), "KODE PELANGGAN", data['kode_pelanggan'])
+    add_row("KECAMATAN KIRIM", data.get('kecamatan_kirim', ''), "TGL PENGAJUAN", data['tgl_pengajuan'])
+    add_row("KAB / KOTA KIRIM", data.get('kota_kirim', ''), "NAMA PEMILIK", data['nama_pemilik'])
+    
+    pdf.ln(1) # Jeda sedikit antara kirim dan tagih
+    
+    add_row("ALAMAT TAGIH", data['alamat_tagih'], "TELEPON PEMILIK", data['telp_pemilik'])
+    add_row("KELURAHAN TAGIH", data.get('kelurahan', ''), "ALAMAT PEMILIK", data['alamat_pemilik'])
+    add_row("KECAMATAN TAGIH", data.get('kecamatan', ''), "NIK", data['nik'])
+    add_row("KAB / KOTA TAGIH", data['kota'], "NAMA PIC", data['nama_pic'])
+    
+    add_row("TELEPON", data['telepon'], "TELEPON PIC", data['telp_pic'])
+    add_row("EMAIL", data['email'], "JABATAN", data['jabatan'])
     add_row("JUMLAH STORE", data['jumlah_store'], "CHANNEL DIST", data['channel_dist'])
     
     pdf.ln(2)
@@ -168,24 +181,26 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     pdf.set_x(10)
     pdf.cell(40, 5, txt="LINK LOKASI G-MAP :")
     pdf.multi_cell(150, 5, txt=data['link_gmap'], border='B')
-    pdf.ln(1)
 
     # --- TIPE PENJUALAN & PEMBAYARAN (Sejajar) ---
     y = pdf.get_y()
     pdf.set_font("Arial", '', 9)
-    pdf.cell(35, 5, txt="TIPE PENJUALAN :")
+    pdf.set_x(10)
+    pdf.cell(35, 5, txt="TIPE PENJUALAN")
+    pdf.cell(5, 5, txt=":")
     draw_checkbox(50, y, "CBD", data['tipe_penjualan'] == "CBD")
     draw_checkbox(65, y, "COD", data['tipe_penjualan'] == "COD")
     draw_checkbox(80, y, f"TOP {data['top_hari'] if data['tipe_penjualan'] == 'TOP' else '.....'} HARI", data['tipe_penjualan'] == "TOP")
     
-    pdf.set_xy(115, y)
-    pdf.cell(30, 5, txt="PEMBAYARAN :")
-    draw_checkbox(150, y, "TRANSFER", data['jenis_pembayaran'] == "TRANSFER")
-    draw_checkbox(175, y, "BG", data['jenis_pembayaran'] == "BG")
-    draw_checkbox(185, y, "TUNAI", data['jenis_pembayaran'] == "TUNAI")
+    pdf.set_xy(110, y) # Dipaksa sejajar di x=110
+    pdf.cell(35, 5, txt="PEMBAYARAN")
+    pdf.cell(5, 5, txt=":")
+    draw_checkbox(148, y, "TRANSFER", data['jenis_pembayaran'] == "TRANSFER")
+    draw_checkbox(173, y, "BG", data['jenis_pembayaran'] == "BG")
+    draw_checkbox(186, y, "TUNAI", data['jenis_pembayaran'] == "TUNAI")
     pdf.ln(6)
 
-    # --- INFORMASI BANK (Sejajar) ---
+    # --- INFORMASI BANK (Sudah otomatis sejajar oleh add_row) ---
     add_row("NAMA PEMILIK BANK", data.get('nama_pemilik_bank', ''), "BANK ASAL", data.get('bank_asal', ''))
 
     # --- LIMIT PIUTANG & NOTA (Sejajar) ---
@@ -193,28 +208,32 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     pdf.cell(35, 5, txt="LIMIT PIUTANG")
     pdf.cell(10, 5, txt=": Rp")
     pdf.cell(45, 5, txt=str(data['limit_piutang']), border='B')
-    pdf.cell(40, 5, txt="LIMIT LEMBAR NOTA :", align='R')
-    pdf.cell(60, 5, txt=f"{data['limit_nota']} lembar", border='B', ln=True)
+    
+    pdf.set_xy(110, pdf.get_y()) # Dipaksa sejajar di x=110
+    pdf.cell(35, 5, txt="LIMIT LEMBAR NOTA")
+    pdf.cell(5, 5, txt=":")
+    pdf.cell(50, 5, txt=f"{data['limit_nota']} lembar", border='B', ln=True)
     pdf.ln(2)
 
     # --- STATUS PAJAK & NOMOR NPWP (Sejajar) ---
     y = pdf.get_y()
+    pdf.set_x(10)
     pdf.cell(35, 5, txt="STATUS PAJAK")
     pdf.cell(5, 5, txt=":")
     draw_checkbox(50, y, "NONPKP", data['status_pajak'] == "NONPKP")
     draw_checkbox(75, y, "PKP", data['status_pajak'] == "PKP")
     
-    pdf.set_xy(110, y)
+    pdf.set_xy(110, y) # Dipaksa sejajar di x=110
     pdf.cell(35, 5, txt="NOMOR NPWP")
     pdf.cell(5, 5, txt=":")
     pdf.cell(50, 5, txt=str(data['npwp']), border='B', ln=True)
     pdf.ln(1)
     
     # Detail NPWP
-    pdf.cell(40, 5, txt="NAMA PEMILIK NPWP :")
-    pdf.multi_cell(150, 5, txt=str(data.get('nama_pemilik_npwp', '')), border='B')
-    pdf.cell(40, 5, txt="ALAMAT NPWP :")
-    pdf.multi_cell(150, 5, txt=str(data.get('alamat_npwp', '')), border='B')
+    pdf.cell(45, 5, txt="NAMA PEMILIK NPWP :")
+    pdf.multi_cell(145, 5, txt=str(data.get('nama_pemilik_npwp', '')), border='B')
+    pdf.cell(45, 5, txt="ALAMAT NPWP :")
+    pdf.multi_cell(145, 5, txt=str(data.get('alamat_npwp', '')), border='B')
     pdf.ln(1)
 
     pdf.cell(50, 6, txt="TIPE PENERBITAN FAKTUR PAJAK :", ln=True)
