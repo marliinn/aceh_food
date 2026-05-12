@@ -179,8 +179,12 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     draw_radio_row("JENIS PEMBAYARAN :", ["TRANSFER", "BG", "TUNAI"], data['jenis_pembayaran'])
     
     pdf.set_x(10)
-    pdf.cell(40, 6, txt="NAMA REKENING BANK :")
-    pdf.multi_cell(150, 6, txt=data['nama_rekening'], border='B')
+    pdf.cell(40, 6, txt="NAMA PEMILIK BANK :")
+    pdf.multi_cell(150, 6, txt=str(data.get('nama_pemilik_bank', '')), border='B')
+    
+    pdf.set_x(10)
+    pdf.cell(40, 6, txt="BANK ASAL :")
+    pdf.multi_cell(150, 6, txt=str(data.get('bank_asal', '')), border='B')
     
     pdf.set_x(10)
     pdf.cell(35, 6, txt="LIMIT PIUTANG")
@@ -414,7 +418,8 @@ if st.session_state.halaman == 1:
             top_hari = st.number_input("Jumlah Hari TOP", min_value=1, step=1, value=max(_top, 1))
         bayar_opts       = ["TRANSFER", "BG", "TUNAI"]
         jenis_pembayaran = st.radio("Jenis Pembayaran *", bayar_opts, index=get_idx(bayar_opts, "jenis_pembayaran"), horizontal=True)
-        nama_rekening    = st.text_input("Nama Rekening Bank", value=get_val("nama_rekening"))
+        nama_pemilik_bank = st.text_input("Nama Pemilik Bank", value=get_val("nama_pemilik_bank"))
+        bank_asal         = st.text_input("Bank Asal", value=get_val("bank_asal"))
         cl1, cl2         = st.columns(2)
         with cl1: limit_piutang = st.text_input("Limit Piutang (Rp) *",    value=get_val("limit_piutang"))
         with cl2: limit_nota    = st.text_input("Limit Lembar Nota (Rp) *", value=get_val("limit_nota"))
@@ -455,7 +460,7 @@ if st.session_state.halaman == 1:
         "jumlah_store": jumlah_store, "channel_dist": channel_dist,
         "status_kepemilikan": status_kepemilikan, "jenis_bangunan": jenis_bangunan,
         "link_gmap": link_gmap, "tipe_penjualan": tipe_penjualan, "top_hari": str(top_hari),
-        "jenis_pembayaran": jenis_pembayaran, "nama_rekening": nama_rekening,
+        "jenis_pembayaran": jenis_pembayaran, "nama_pemilik_bank": nama_pemilik_bank, "bank_asal": bank_asal,
         "limit_piutang": limit_piutang, "limit_nota": limit_nota,
         "status_pajak": status_pajak, "npwp": npwp, "alamat_npwp": alamat_npwp,
         "tipe_faktur": tipe_faktur, "metode_faktur": metode_faktur,
@@ -500,14 +505,24 @@ elif st.session_state.halaman == 2:
     data_h1 = st.session_state.form_data
 
     st.subheader("4. Lampiran Foto & Dokumen")
-    ci1, ci2 = st.columns(2)
-    with ci1:
+    ci_doc1, ci_doc2 = st.columns(2)
+    with ci_doc1:
         ktp_img   = st.file_uploader("Upload Foto KTP",          type=["jpg","jpeg","png"])
-        depan_img = st.file_uploader("Foto Toko: Tampak Depan *",  type=["jpg","jpeg","png"])
-        kiri_img  = st.file_uploader("Foto Toko: Samping Kiri *",  type=["jpg","jpeg","png"])
-    with ci2:
+    with ci_doc2:
         npwp_img  = st.file_uploader("Upload Foto NPWP",         type=["jpg","jpeg","png"])
+
+    # Baris 2: Foto Toko Depan & Dalam
+    ci_toko1, ci_toko2 = st.columns(2)
+    with ci_toko1:
+        depan_img = st.file_uploader("Foto Toko: Tampak Depan *",  type=["jpg","jpeg","png"])
+    with ci_toko2:
         dalam_img = st.file_uploader("Foto Toko: Tampak Dalam *",  type=["jpg","jpeg","png"])
+
+    # Baris 3: Foto Toko Kiri & Kanan
+    ci_toko3, ci_toko4 = st.columns(2)
+    with ci_toko3:
+        kiri_img  = st.file_uploader("Foto Toko: Samping Kiri *",  type=["jpg","jpeg","png"])
+    with ci_toko4:
         kanan_img = st.file_uploader("Foto Toko: Samping Kanan *", type=["jpg","jpeg","png"])
 
     st.markdown("---")
