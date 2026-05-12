@@ -65,6 +65,12 @@ def reset_all_data():
 
 # ── FUNGSI GENERATE PDF ───────────────────────────────────────────────
 def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
+
+    for key, value in data.items():
+        if isinstance(value, str):
+            # Mengganti karakter yang tidak didukung (seperti emoji) dengan tanda tanya (?)
+            data[key] = value.encode('latin-1', 'replace').decode('latin-1')
+
     pdf = FPDF(orientation='P', unit='mm', format='A4')
     pdf.set_auto_page_break(auto=True, margin=10)
     pdf.add_page()
