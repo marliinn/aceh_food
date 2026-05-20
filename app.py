@@ -8,6 +8,8 @@ import json
 import base64
 import numpy as np
 from streamlit_drawable_canvas import st_canvas
+import pandas as pd
+from io import BytesIO
 
 # --- MENGHILANGKAN HEADER & FOOTER BAWAAN STREAMLIT ---
 hide_st_style = """
@@ -62,6 +64,42 @@ def reset_all_data():
     st.session_state.halaman    = 1
     st.session_state.scroll_to_top = True
     clear_draft()
+
+# --- FUNGSI GENERATE EXCEL -------------------------------------------
+def generate_excel(data):
+    # Filter: Hanya ambil data teks/angka, buang data file gambar/upload
+    filtered_data = {k: v for k, v in data.items() if not k.endswith('_img')}
+    
+    # Merapikan label Keterangan
+    formatted_data = []
+    for key, value in filtered_data.items():
+        # 1. Ganti underscore jadi spasi dan buat Huruf Kapital di Awal Kata (Title Case)
+        label_rapi = key.replace('_', ' ').title()
+        
+        # 2. Perbaikan manual untuk singkatan agar hurufnya besar semua
+        label_rapi = label_rapi.replace('Npwp', 'NPWP')
+        label_rapi = label_rapi.replace('Pic', 'PIC')
+        label_rapi = label_rapi.replace('Gmap', 'G-MAP')
+        label_rapi = label_rapi.replace('Tgl', 'Tanggal')
+        label_rapi = label_rapi.replace('Nik', 'NIK')
+        
+        # Masukkan ke dalam list baru
+        formatted_data.append([label_rapi, value])
+    
+    # Ubah list yang sudah rapi menjadi DataFrame (Tabel)
+    df = pd.DataFrame(formatted_data, columns=['Keterangan', 'Nilai Data'])
+    
+    # Proses konversi ke Excel
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Data Pengajuan')
+        
+        # (Opsional) Melebarkan kolom A dan B agar teks tidak terpotong
+        worksheet = writer.sheets['Data Pengajuan']
+        worksheet.set_column('A:A', 25) # Lebar kolom Keterangan
+        worksheet.set_column('B:B', 40) # Lebar kolom Nilai Data
+    
+    return output.getvalue()
 
 # ── FUNGSI GENERATE PDF ───────────────────────────────────────────────
 def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
@@ -275,19 +313,43 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     # --- HALAMAN 2: LAMPIRAN & TTD ---
     pdf.add_page()
     def draw_img(label, img_file, x, y, w, h=45):
+        # 1. Gambar latar abu-abu dan label teks
         pdf.set_fill_color(210, 210, 210)
         pdf.rect(x, y, w, 5, 'DF')
         pdf.set_xy(x, y)
         pdf.set_font("Arial", '', 8)
         pdf.cell(w, 5, txt=label, align='C')
+        
+        # 2. Gambar bingkai luar untuk foto
         pdf.rect(x, y+5, w, h)
+        
         if img_file:
             with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as tmp:
                 img = Image.open(img_file)
                 if img.mode in ("RGBA", "P"): 
                     img = img.convert("RGB")
+                
+                # --- KALKULASI ASPEK RASIO (ANTI-GEPENG) ---
+                img_w, img_h = img.size
+                img_ratio = img_w / img_h
+                box_ratio = w / h
+                
+                if img_ratio > box_ratio:
+                    # Jika gambar melebar: paskan lebar (w), sesuaikan tinggi, taruh di tengah vertikal
+                    draw_w = w
+                    draw_h = w / img_ratio
+                    draw_x = x
+                    draw_y = y + 5 + (h - draw_h) / 2
+                else:
+                    # Jika gambar meninggi: paskan tinggi (h), sesuaikan lebar, taruh di tengah horizontal
+                    draw_h = h
+                    draw_w = h * img_ratio
+                    draw_x = x + (w - draw_w) / 2
+                    draw_y = y + 5
+                
+                # Simpan dan tempelkan ke PDF dengan ukuran baru
                 img.save(tmp.name, format="JPEG")
-                pdf.image(tmp.name, x=x, y=y+5, w=w, h=h)
+                pdf.image(tmp.name, x=draw_x, y=draw_y, w=draw_w, h=draw_h)
             os.remove(tmp.name)
 
     draw_img("KTP", data['ktp_img'], 10, 10, 92)
@@ -619,12 +681,26 @@ elif st.session_state.halaman == 2:
             
         else:
             pdf_bytes = generate_pdf(data_final, img_p, img_s)
+            excel_bytes = generate_excel(data_final)
 
-            st.download_button(
-                label="📄 Generate & Download PDF",
+            col_dl1, col_dl2 = st.columns(2)
+        
+            with col_dl1:
+                st.download_button(
+                label="📄 Download PDF",
                 data=pdf_bytes,
                 file_name=f"Form_Pelanggan_{data_final['nama_outlet']}.pdf",
                 mime="application/pdf",
                 use_container_width=True,
-                on_click=reset_all_data,
-            )
+                on_click=reset_all_data
+                )
+            
+            with col_dl2:
+                st.download_button(
+                label="📊 Download Excel",
+                data=excel_bytes,
+                file_name=f"Data_Pelanggan_{data_final['nama_outlet']}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+                # on_click=reset_all_data # Opsional: jika ingin reset setelah download excel juga
+                )
