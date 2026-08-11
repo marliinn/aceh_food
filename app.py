@@ -115,7 +115,7 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     
     # --- KOP SURAT ---
     if os.path.exists('logo.jpeg'):
-        pdf.image('logo.jpeg', x=10, y=10, w=25) 
+        pdf.image('logo.jpeg', x=10, y=20, w=25) 
         text_x = 35
     else:
         text_x = 10
@@ -622,9 +622,9 @@ elif st.session_state.halaman == 2:
     # Baris 3: Foto Toko Kiri & Kanan
     ci_toko3, ci_toko4 = st.columns(2)
     with ci_toko3:
-        kiri_img  = st.file_uploader("Foto Toko: Samping Kiri *",  type=["jpg","jpeg","png"])
+        kiri_img  = st.file_uploader("Foto Toko: Tampak Samping Kiri (Terlihat Jalan) *",  type=["jpg","jpeg","png"])
     with ci_toko4:
-        kanan_img = st.file_uploader("Foto Toko: Samping Kanan *", type=["jpg","jpeg","png"])
+        kanan_img = st.file_uploader("Foto Toko: Tampak Samping Kanan (Terlihat Jalan) *", type=["jpg","jpeg","png"])
 
     st.markdown("---")
     st.subheader("5. Tanda Tangan Digital")
