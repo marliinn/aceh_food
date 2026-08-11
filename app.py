@@ -660,8 +660,8 @@ elif st.session_state.halaman == 2:
         mandatory_images = {
             "Foto Toko: Tampak Depan": depan_img,
             "Foto Toko: Tampak Dalam": dalam_img,
-            "Foto Toko: Samping Kiri": kiri_img,
-            "Foto Toko: Samping Kanan": kanan_img
+            "Foto Toko: Tampak Samping Kiri (Terlihat Jalan)": kiri_img,
+            "Foto Toko: Tampak Samping Kanan (Terlihat Jalan)": kanan_img
         }
         
         empty_images = [name for name, img in mandatory_images.items() if img is None]
