@@ -365,8 +365,8 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
     
     draw_img("TAMPAK DEPAN", data['depan_img'], 10, 71, 92)
     draw_img("TAMPAK DALAM", data['dalam_img'], 105, 71, 95)
-    draw_img("TAMPAK KIRI", data['kiri_img'], 10, 125, 92)
-    draw_img("TAMPAK KANAN", data['kanan_img'], 105, 125, 95)
+    draw_img("TAMPAK SAMPING KIRI (TERLIHAT JALAN)", data['kiri_img'], 10, 125, 92)
+    draw_img("TAMPAK SAMPING KANAN (TERLIHAT JALAN)", data['kanan_img'], 105, 125, 95)
 
     # --- BAGIAN TANDA TANGAN DIGITAL ---
     y_sig = 190
