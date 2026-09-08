@@ -633,12 +633,14 @@ elif st.session_state.halaman == 2:
         st.write(f"**Tanda Tangan Pelanggan *({data_h1.get('nama_pemilik','...')})**")
         canvas_p = st_canvas(fill_color="rgba(255,255,255,0)", stroke_width=3,
                              stroke_color="#000000", background_color="#ffffff",
-                             height=150, width=350, drawing_mode="freedraw", key="cp")
+                             height=150, width=350, drawing_mode="freedraw", key="cp",
+                             return_image_data=True) 
     with cs2:
         st.write(f"**Tanda Tangan Sales *({data_h1.get('nama_sales','...')})**")
         canvas_s = st_canvas(fill_color="rgba(255,255,255,0)", stroke_width=3,
                              stroke_color="#000000", background_color="#ffffff",
-                             height=150, width=350, drawing_mode="freedraw", key="cs")
+                             height=150, width=350, drawing_mode="freedraw", key="cs",
+                             return_image_data=True) 
 
     st.markdown("---")
     cb, cs = st.columns([1, 4])
