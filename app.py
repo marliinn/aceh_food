@@ -299,6 +299,8 @@ def generate_pdf(data, sig_pelanggan=None, sig_sales=None):
 
     y = pdf.get_y()
     pdf.cell(40, 6, txt="KETERANGAN PO :")
+
+    y = pdf.get_y()
     draw_checkbox(50, y, "MINTA PO", data['ket_po'] == "MINTA PO")
     draw_checkbox(80, y, "LANGSUNG ISI", data['ket_po'] == "LANGSUNG ISI")
     pdf.ln(8)
@@ -497,7 +499,19 @@ if st.session_state.halaman == 1:
         _store         = int(_store) if _store else 1
         jumlah_store   = st.number_input("Jumlah Store *", min_value=1, step=1, value=max(_store, 1))
         
-        channel_opts   = ["Mini Market", "Super Market", "Hyper Market", "HORECA", "Toko Oleh-Oleh Modern", "Toko Oleh-Oleh Tradisional"]
+        channel_opts   = [
+            "Modern Trade (MT) - Super Market", 
+            "Modern Trade (MT) - Mini Market", 
+            "Modern Trade (MT) - Hyper Market", 
+            "HORECA - Hotel",
+            "HORECA - Restoran", 
+            "HORECA - Cafe", "HORECA - Pusat Oleh Oleh Modern", 
+            "HORECA - Pusat Oleh Oleh Tradisional", 
+            "Generat Trade (GT) - Star Outlet (SO)", 
+            "Generat Trade (GT) - Whole Saler (WS)", 
+            "Generat Trade (GT) - Retail (Retail)",
+            ]
+        
         channel_dist   = st.selectbox("Channel Distribusi *", channel_opts, index=get_idx(channel_opts, "channel_dist"))
 
     st.markdown("---")
